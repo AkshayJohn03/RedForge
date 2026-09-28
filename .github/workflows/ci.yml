@@ -19,11 +19,13 @@ jobs:
       - name: Lint
         run: pip install ruff -q && python -m ruff check src tests
       - name: Tests (offline)
-        run: python -m pytest tests -q
+        run: |
+          pip install coverage -q
+          coverage run -m pytest tests -q
+          coverage report --fail-under=60
       - name: RedForge gate (hardened ASR must stay under threshold)
         run: python -m redforge.cli gate --max-asr 0.05
       - name: Dependency audit
         run: |
           pip install pip-audit -q
           pip-audit || true
-        continue-on-error: true
