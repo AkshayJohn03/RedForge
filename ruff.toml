@@ -1,0 +1,7 @@
+# RedForge lint config.
+# BLE001: telemetry/teardown paths must never break a campaign — blind excepts
+#   with best-effort semantics are deliberate at those boundaries.
+# FURB167: verbatim regex flags are clearer than inline aliases for security patterns.
+# S110/F841: defensive skips in telemetry and optional-dependency probes.
+[lint]
+ignore = ["BLE001", "FURB167", "S110", "F841"]
