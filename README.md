@@ -1,5 +1,8 @@
 # RedForge
 
+[![▶ whiteboard explainer video · 6m54s](https://img.shields.io/badge/%E2%96%B6_whiteboard_explainer-6m54s-E8B44A?style=flat-square&logo=googleplay&logoColor=white)](brag-output/brag.mp4)
+
+
 **Automated LLM red-team harness + layered prompt-injection defense — proven on a recruiting assistant that ingests untrusted resumes.**
 
 > **Authorization notice:** RedForge is defensive security tooling for testing LLM systems **you own**. All bundled resumes, names, companies and payloads are synthetic. Findings feed defense hardening; nothing here is an attack toolkit against third parties.
