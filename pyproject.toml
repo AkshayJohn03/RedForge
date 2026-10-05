@@ -19,5 +19,5 @@ dependencies = [
 
 [project.optional-dependencies]
 otel = ["opentelemetry-sdk>=1.25"]
-langfuse = ["langfuse>=2.0"]
+langfuse = ["langfuse>=4.16.0"]
 
