@@ -34,18 +34,29 @@ class Evidence(BaseModel):
 
 
 def _render(attack: Attack, goal: str = GOAL) -> list[str]:
-    """Turns for this attack (multi-turn crescendo returns its script)."""
+    """Turns for this attack (multi-turn crescendo returns its script).
+
+    ``attack.slots`` carries structured payloads (SQL, URLs, JSON argument
+    objects); slot values substitute literally so braces inside a payload can
+    never collide with ``str.format``.
+    """
     if attack.multi_turn:
         turns = list(attack.multi_turn)
-        turns[-1] = turns[-1].format(payload=goal)
+        try:
+            turns[-1] = turns[-1].format(payload=goal, **attack.slots)
+        except (KeyError, IndexError):
+            pass  # mutated variant mangled a placeholder; use as-is
         return turns
     tpl = attack.template
-    kwargs: dict[str, str] = {"payload": goal}
+    kwargs: dict[str, str] = {"payload": goal, **attack.slots}
     if "{b64}" in tpl:
         kwargs["b64"] = base64_wrap(goal)
     if "{rot13}" in tpl:
         kwargs["rot13"] = rot13(goal)
-    return [tpl.format(goal=goal, **kwargs)]
+    try:
+        return [tpl.format(goal=goal, **kwargs)]
+    except (KeyError, IndexError):
+        return [tpl]  # mutated variant mangled a placeholder; use as-is
 
 
 def _episode_messages(attack: Attack, turns: list[str], resume: str | None,

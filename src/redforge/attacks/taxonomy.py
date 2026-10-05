@@ -22,6 +22,7 @@ class Category(str, Enum):
     tool_exfil = "tool_exfil"
     multi_turn_crescendo = "multi_turn_crescendo"
     indirect_document = "indirect_document"
+    tool_abuse = "tool_abuse"
 
 
 # OWASP LLM Top-10 (2025) entries relevant to this harness
@@ -40,13 +41,19 @@ class Attack(BaseModel):
     id: str
     category: Category
     owasp: list[str] = Field(default_factory=list)
+    # NIST AI RMF 1.0 function tag(s): GOVERN / MAP / MEASURE / MANAGE
+    nist: list[str] = Field(default_factory=list)
     template: str
     # indirect attacks ride inside an untrusted document (the resume)
     rides_in_document: bool = False
     multi_turn: list[str] = Field(default_factory=list)
+    # named template slots for structured payloads (SQL, URLs, paths, JSON
+    # argument objects). Slot VALUES are substituted literally, so payloads
+    # containing braces never collide with str.format.
+    slots: dict[str, str] = Field(default_factory=dict)
 
     def render(self, goal: str = GOAL, **kw) -> str:
-        return self.template.format(payload=goal, **kw)
+        return self.template.format(payload=goal, **self.slots, **kw)
 
 
 def _seed_registry() -> list[Attack]:
