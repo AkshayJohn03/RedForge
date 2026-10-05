@@ -20,6 +20,9 @@ def main(argv=None) -> int:
     p_run.add_argument("--target", choices=["vulnerable", "hardened"], default="hardened")
     p_run.add_argument("--out", default="redforge-output")
     p_run.add_argument("--indirect-only", action="store_true")
+    p_run.add_argument("--config", default=None,
+                       help="declarative campaign config (redforge.yaml); "
+                            "overrides --target/--out")
 
     p_gate = sub.add_parser("gate", help="CI gate on hardened ASR")
     p_gate.add_argument("--max-asr", type=float, default=0.05)
@@ -28,6 +31,8 @@ def main(argv=None) -> int:
     args = ap.parse_args(argv)
 
     if args.cmd == "run":
+        if args.config:
+            return _run_from_config(args.config)
         target = VulnerableTarget() if args.target == "vulnerable" else HardenedTarget()
         attacks = None
         resumes = laced_resumes()
@@ -48,6 +53,37 @@ def main(argv=None) -> int:
         return run_gate(report.asr, args.max_asr, out=args.out)
 
     return 2
+
+
+def _run_from_config(config_path: str) -> int:
+    """``redforge run --config redforge.yaml``: the declarative campaign path.
+
+    Gate semantics: configs that describe a DEFENDED target (hardened preset or
+    an explicit defense stack) enforce gate.max_asr and exit non-zero on breach;
+    vulnerable/custom-undefended runs are exposure baselines and stay
+    informative (exit 0).
+    """
+    from .compliance import map_findings
+    from .config import RedForgeConfig, build_target, select_attacks
+
+    try:
+        cfg = RedForgeConfig.load(config_path)
+    except Exception as exc:
+        print(f"redforge run: {exc}")
+        return 2
+
+    target = build_target(cfg.target)
+    attacks = select_attacks(cfg)
+    evidence = asyncio.run(run_campaign(target, attacks=attacks, resumes=laced_resumes()))
+    compliance = map_findings(evidence, cfg.compliance.standards) if cfg.compliance.standards else None
+    report = CampaignReport.from_evidence(cfg.target.name, evidence)
+    path = save(report, cfg.report.out_dir, compliance=compliance)
+    print(f"config={config_path} target={cfg.target.name} attacks={report.total_attacks} "
+          f"asr={report.asr:.2%} -> {path}")
+    defended = bool(cfg.target.defenses) or cfg.target.name == "hardened"
+    if defended:
+        return run_gate(report.asr, cfg.gate.max_asr)
+    return 0
 
 
 if __name__ == "__main__":

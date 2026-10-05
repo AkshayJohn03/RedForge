@@ -1,0 +1,28 @@
+# RedForge declarative campaign config.
+# Security engineers configure attacks, defenses, the CI gate and compliance
+# mapping here — no orchestration code. Validate: redforge run --config redforge.yaml
+target:
+  # vulnerable = no defenses (exposure baseline) | hardened = full 6-layer stack
+  # custom = build a stack from `defenses` below
+  name: hardened
+  defenses: []            # e.g. [input_scanner, tool_firewall] -> custom stack
+
+attacks:
+  categories: []          # empty = all 10 categories incl. tool_abuse
+  depth: {}               # per-category cap, e.g. {tool_abuse: 6}
+  mutations: true         # include deterministic mutator variants (seeded)
+  generations: 0          # >0 runs the evolutionary engine and appends winners
+
+gate:
+  max_asr: 0.05           # CI gate: hardened ASR must stay under 5%
+
+compliance:
+  standards:              # mapped into the report's Compliance section
+    - owasp_llm_top10     # OWASP LLM Top-10 (2025)
+    - nist_ai_rmf         # NIST AI RMF 1.0 (GOVERN/MAP/MEASURE/MANAGE)
+    - eu_ai_act           # Art. 15 (accuracy/robustness), Art. 14 (oversight)
+
+report:
+  out_dir: redforge-output
+
+seed: 42                  # every run is reproducible from this seed
