@@ -53,7 +53,8 @@ def _heatmap(matrix: dict[str, dict[str, float]], categories: list[str]) -> str:
     return "\n".join(lines)
 
 
-def to_markdown(report: CampaignReport, ablation: dict[str, dict[str, float]] | None = None) -> str:
+def to_markdown(report: CampaignReport, ablation: dict[str, dict[str, float]] | None = None,
+                compliance: dict[str, list[dict]] | None = None) -> str:
     lines = [
         f"# RedForge campaign report — {report.target_name}",
         "",
@@ -80,15 +81,25 @@ def to_markdown(report: CampaignReport, ablation: dict[str, dict[str, float]] | 
         for cat in cats:
             rows = [f"{ablation[col].get(cat, 0.0):.2f}" for col in ablation]
             lines.append(f"| {cat} | " + " | ".join(rows) + " |")
+    if compliance:
+        from ..compliance import compliance_markdown
+
+        md = compliance_markdown(compliance)
+        if md:
+            lines.append(md)
     return "\n".join(lines) + "\n"
 
 
-def save(report: CampaignReport, out_dir: str | Path, ablation=None) -> Path:
+def save(report: CampaignReport, out_dir: str | Path, ablation=None,
+         compliance: dict[str, list[dict]] | None = None) -> Path:
     d = Path(out_dir)
     d.mkdir(parents=True, exist_ok=True)
-    (d / "campaign_report.md").write_text(to_markdown(report, ablation), encoding="utf-8")
+    (d / "campaign_report.md").write_text(
+        to_markdown(report, ablation, compliance), encoding="utf-8"
+    )
     (d / "campaign_report.json").write_text(
-        json.dumps({"report": report.model_dump(), "ablation": ablation}, indent=2),
+        json.dumps({"report": report.model_dump(), "ablation": ablation,
+                    "compliance": compliance}, indent=2),
         encoding="utf-8",
     )
     return d / "campaign_report.md"
