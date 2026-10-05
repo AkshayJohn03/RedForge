@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "redforge"
-version = "1.0.0"
+version = "1.1.0"
 description = "Automated LLM red-team harness + layered prompt-injection defense"
 requires-python = ">=3.11"
 license = { text = "MIT" }
